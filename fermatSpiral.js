@@ -24,7 +24,11 @@ import ND from '../../commonNodeJS/master/nD/nD.js';
 //import ND from 'https://raw.githack.com/anhr/commonNodeJS/master/nD/build/nD.module.min.js';
 if (ND.default) ND = ND.default;
 
-import WebGPU from '../../WebGPU/master/WebGPU.js';
+//import WebGPU from '../../WebGPU/master/WebGPU.js';
+import WebGPU from '../../WebGPU/master/build/WebGPU.module.js';
+//import WebGPU from '../../WebGPU/master/build/WebGPU.module.min.js';
+//import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.js';
+//import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.min.js';
 
 class FermatSpiral {
 
