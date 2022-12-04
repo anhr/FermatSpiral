@@ -61,8 +61,8 @@ class FermatSpiral {
 	 * @param {boolean} [settings.object.faces.transparent= true] Defines whether this material is transparent.
 	 * This has an effect on rendering as transparent objects need special treatment and are rendered after non-transparent objects.
 	 * When set to true, the extent to which the material is transparent is controlled by setting its <b>opacity</b> property.
-	 * @param {GUI} [settings.object.dat] [dat.GUI()]{@link https://github.com/dataarts/dat.gui}.
 	 * See [Material.transparent]{@link https://threejs.org/docs/#api/en/materials/Material.transparent}.
+	 * @param {GUI} [settings.object.dat] [dat.GUI()]{@link https://github.com/dataarts/dat.gui}. Use this key if you want to display the <a href="../../../WebGPU/master/jsdoc/module-WebGPU-WebGPU-WebGPU.gui.html" target="_blank">WebGPU.gui</a>
 	 */
 	constructor( settings = {} ) {
 
