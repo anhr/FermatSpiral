@@ -24,8 +24,8 @@ import ND from '../../commonNodeJS/master/nD/nD.js';
 //import ND from 'https://raw.githack.com/anhr/commonNodeJS/master/nD/build/nD.module.min.js';
 if (ND.default) ND = ND.default;
 
-//import WebGPU from '../../WebGPU/master/WebGPU.js';
-import WebGPU from '../../WebGPU/master/build/WebGPU.module.js';
+import WebGPU from '../../WebGPU/master/WebGPU.js';
+//import WebGPU from '../../WebGPU/master/build/WebGPU.module.js';
 //import WebGPU from '../../WebGPU/master/build/WebGPU.module.min.js';
 //import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.js';
 //import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.min.js';
@@ -61,6 +61,7 @@ class FermatSpiral {
 	 * @param {boolean} [settings.object.faces.transparent= true] Defines whether this material is transparent.
 	 * This has an effect on rendering as transparent objects need special treatment and are rendered after non-transparent objects.
 	 * When set to true, the extent to which the material is transparent is controlled by setting its <b>opacity</b> property.
+	 * @param {GUI} [settings.object.dat] [dat.GUI()]{@link https://github.com/dataarts/dat.gui}.
 	 * See [Material.transparent]{@link https://threejs.org/docs/#api/en/materials/Material.transparent}.
 	 */
 	constructor( settings = {} ) {
@@ -756,6 +757,7 @@ class FermatSpiral {
 
 					},
 				);
+				new WebGPU.gui(settings.object.options, settings.object.dat);
 
 			} else {
 
