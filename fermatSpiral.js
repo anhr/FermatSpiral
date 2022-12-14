@@ -30,6 +30,8 @@ import WebGPU from '../../WebGPU/master/WebGPU.js';
 //import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.js';
 //import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.min.js';
 
+import cookie from '../../commonNodeJS/master/cookieNodeJS/cookie.js';
+
 class FermatSpiral {
 
 	/**
@@ -627,7 +629,7 @@ class FermatSpiral {
 								out: out => {
 
 									console.log('vertices:');
-									/*
+
 									const verticesArray = new Float32Array(out);
 									const vertices = [];
 									for (var i = 0, j = 0; i < l; i++, j += verticesRowlength) {
@@ -637,8 +639,8 @@ class FermatSpiral {
 										});
 									}
 									console.log(vertices);
-									*/
-									const vertices = WebGPU.out2Matrix(out, {
+
+									const aVertices = WebGPU.out2Matrix(out, {
 
 										size: [
 											l,//fermatSpiral vertices count. Каждый ряд это координата точки 
@@ -648,7 +650,50 @@ class FermatSpiral {
 										returnMatrix: true,//return matrix for debug
 
 									});
-									console.log(vertices);
+									console.log(aVertices);
+
+									const cookieName = 'WebGPUdebug',
+										boDebug = cookie.get(cookieName, false);
+									cookie.set(cookieName, boDebug);
+									if ( boDebug ) {
+										
+										console.log('vertices test:');
+										const pointsDebug = [];
+										createVertices(pointsDebug);
+										function compareArrays(a) {
+	
+											const name1 = Object.keys(a)[0], a1 = a[name1],
+												name2 = Object.keys(a)[1], a2 = a[name2];
+											if (a1.length !== a2.length) console.error('FermatSpiral: Debug. ' + name1 + '.length: ' + a1.length + ' !== ' + name2 + '.length: ' + a2.length);
+											for (let i = 0; i < a1.length; i++){
+		
+												const i1 = a1[i], i2 = a2[i];
+												Object.keys(i1).forEach( key => {
+		
+													if (i1[key] instanceof Array) {
+														
+														const a = {};
+														a[name1 + '.' + key] = i1[key];
+														a[name2 + '.' + key] = i2[key];
+														compareArrays(a);
+														
+													} else {
+														
+														if (Math.abs(i1[key] - i2[key]) > 1.2e-5)//4e-6)//3.527606030825914e-7)
+															console.error('FermatSpiral: Debug. ' + name1 + '[' + i + '][' + key + ']: ' + i1[key] + ' !== ' + name2 + '[' + i + '][' + key + ']: ' + i2[key]);
+														
+													}
+									
+												} );
+												
+											}
+											
+										}
+										compareArrays({pointsDebug: pointsDebug, points: points});
+										console.log('vertices test completed');
+
+									}
+									
 									createEdgesAndFaces();
 
 								}
@@ -761,6 +806,13 @@ class FermatSpiral {
 
 			} else {
 
+				createVertices(points);
+				createEdgesAndFaces();
+
+			}
+
+			function createVertices(points) {
+
 				const golden_angle = 137.5077640500378546463487,//137.508;//https://en.wikipedia.org/wiki/Golden_angle
 					a = golden_angle * Math.PI / 180.0, b = 90 * Math.PI / 180.0;
 				for (var i = 0; i < l; i++) {
@@ -770,7 +822,6 @@ class FermatSpiral {
 					points.push(new Vector([radius * Math.cos(angleInRadians), radius * Math.sin(angleInRadians)]));
 
 				}
-				createEdgesAndFaces();
 
 			}
 
@@ -924,11 +975,13 @@ class FermatSpiral {
 				//see phase 1 (aNear) in the D:\My documents\MyProjects\webgl\three.js\GitHub\commonNodeJS\master\fermatSpiral\WebGPU\create.c file
 				points.forEach((vertice1, i) => {
 
+					//vertice1: координаты вершины для которой будем искать ближайшие вершины
+					
 					vertice1.i = i;
 
 					points.forEach((vertice2, j) => {
 
-						if (i != j)
+						if (i != j)//не надо вычислять расстояние между одной и той же точкой
 							vertice1.aNear.add(j, vertice1.distanceTo(vertice2));
 
 					});

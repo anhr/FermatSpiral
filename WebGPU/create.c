@@ -121,7 +121,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 
 			for (var j = 0u; j < arrayLength(&vertices); j++)
 			{
-				if (i == j) { continue; }
+				if (i == j) { continue; }//не надо вычислять расстояние между одной и той же точкой
 				let vertice2 = vertices[j].vertice;//Координаты текущей ближайшей вершины
 				let vecDistance = distance(vertice1, vertice2);//расстояние между вершиной и текущей ближайшей вершиной
 
