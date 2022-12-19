@@ -40,28 +40,29 @@ count: u32,//points count меньше общего количества точ�
 }
 @group(0) @binding(1) var<uniform> paramsU32 : ParamsU32;
 */
-//vertices. длинна строики в verticesRowlength
-struct Vertices {
-vertice: vec2<f32>,
-//edges : f32,
-edges: array<u32, maxLength>,//индексы ребер, которые имеют эту вершину
-debug : array<f32, debugCount>
-};
-@group(0) @binding(0) var<storage, read_write> vertices : array <Vertices>;
 
-//aNear
 struct ANear {
 i: u32,//индекс вершины, ближайшей к текущей вершине
-distance: f32,//distance between current vertice and nearest vertice.
+distance : f32,//distance between current vertice and nearest vertice.
 }
 
 //длинна этой структуры определена в aNearRowlength в файле fermatSpiral.js
 struct VerticeANears {
 length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
-iMax: u32,//индекс максимально удаленной вершины из массива aNear
+iMax : u32,//индекс максимально удаленной вершины из массива aNear
 aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
-debug: array<u32, debugCount>,
+debug : array<u32, debugCount>,
 }
+
+//vertices. длинна строики в verticesRowlength
+struct Vertices {
+vertice: vec2<f32>,
+aNear : VerticeANears,
+edges: array<u32, maxLength>,//индексы ребер, которые имеют эту вершину
+debug : array<f32, debugCount>
+};
+@group(0) @binding(0) var<storage, read_write> vertices : array <Vertices>;
+
 @group(0) @binding(1) var<storage, read_write> verticeANears : array<VerticeANears>;//<u32>;//индексы ближайших к текущей вершине вершин
 //@group(0) @binding(2) var<storage, read_write> aNearDistance : array<f32>;//distance between current vertice and nearest vertices.
 

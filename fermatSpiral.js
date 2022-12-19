@@ -68,14 +68,101 @@ class FermatSpiral {
 	 */
 	constructor( settings = {} ) {
 
-		const points = [],//, indices = [[]];
+		const points = new Proxy([], {
+
+			get: function (array, name) {
+
+				if (this.out){
+
+					const i = parseInt(name);
+					if (!isNaN(i)) {
+	
+						if (name >= points.length)
+							console.error('FermatSpiral: points get. Invalid index = ' + name);
+						const j = i * this.out.verticesRowlength;
+						const vertice = new VectorWebGPU([this.out.verticesArray[j], this.out.verticesArray[j + 1]]);
+/*						
+						//индексы вершин, которые ближе всего расположены к текущей вершине
+						vertice.aNear = new Proxy([], {
+		
+							get: function (aNear, name) {
+		
+								const i = parseInt(name);
+								if (!isNaN(i)) {
+		
+									if (name >= aNear.length)
+										console.error('FermatSpiral: Vector.aNear get. Invalid index = ' + name);
+									return aNear[i];
+		
+								}
+								switch (name) {
+
+//									case 'length': return aNear.length;
+//									case 'forEach': return aNear.forEach;
+//									case 'iMax': return aNear.iMax;
+									default: console.error('FermatSpiral: Vector.aNear get. name: ' + name);
+		
+								}
+		
+							},
+							set: function (target, name, value) {
+		
+								//target[name] = value;
+								console.error('FermatSpiral: Vector.aNear set is not available. name: ' + name)
+								return true;
+		
+							},
+		
+						});
+*/
+						
+						return vertice;
+	
+					}
+					switch (name) {
+	 
+						case 'length': return this.out.verticesArray.length / this.out.verticesRowlength;
+						case 'forEach': return (callback) => {
+
+							for (let i = 0; i < points.length; i++)callback(points[i], i);
+							
+						}
+						case 'target': return;
+						case 'isProxy': return true;
+						case 'aNear': return {};
+						default: console.error('fermatSpiral: points get. Invalid name: ' + name);
+	
+					}
+					//console.error('FermatSpiral: points get. Invalid index = ' + name);
+					return;
+					
+				}
+				return array[name];
+
+			},
+			set: function (array, name, value) {
+
+				switch (name) {
+
+					case 'out':
+						this.out = value;
+						value.verticesArray = new Float32Array(value.out);
+						return true;
+
+				}
+				array[name] = value;
+				return true;
+
+			},
+
+		}),
 			n = settings.n === undefined ? 2 : settings.n;
 		settings.count = settings.count === undefined ? 500 : settings.count;
 		settings.c = settings.c === undefined ? 0.04 : settings.c;//constant scaling factor
 		const _this = this;
 		this.geometry = {
 
-			gui: function( fParent, dat, /*ndGui, */options, nd ){
+			gui: function( fParent, dat, options, nd ){
 				
 				settings.object = settings.object || {};
 				settings.object.options = options;
@@ -260,270 +347,320 @@ class FermatSpiral {
 
 		}
 
-		function update(callback) {
+		const maxLength = 7;//максимальное количество ребер вершины
 
-			const maxLength = 7;//максимальное количество ребер вершины
+		class Vector extends ND.VectorN {
 
-			class Vector extends ND.VectorN {
+			/* *
+			 * @description
+			 * <pre>
+			 * An n-dimensional vector is point in an n-dimensional space.
+			 * The length of an array is the dimension of the space.
+			 * </pre>
+			 * @param {Array} [array=0] array of the values for appropriate axes.
+			 * @param {Object} [vectorSettings={}] Following vector settings ia available:
+			 * @param {Function} [vectorSettings.onChange] The event is fired if the value of any axes of the vector has been changed.
+			 */
+			constructor(array = 0, vectorSettings = {}) {
 
-				/* *
-				 * @description
-				 * <pre>
-				 * An n-dimensional vector is point in an n-dimensional space.
-				 * The length of an array is the dimension of the space.
-				 * @param {Array} [array=0] array of the values for appropriate axes.
-				 * </pre>
-				 */
-				constructor(array = 0, vectorSettings = {}) {
+				array = super(n, array).array;
 
-					array = super(n, array).array;
+				//индексы вершин, которые ближе всего расположены к текущей вершине
+				array.aNear = new Proxy([], {
 
-					//индексы вершин, которые ближе всего расположены к текущей вершине
-					array.aNear = new Proxy([], {
+					get: function (aNear, name) {
 
-						get: function (aNear, name) {
+						const i = parseInt(name);
+						if (!isNaN(i)) {
 
-							const i = parseInt(name);
-							if (!isNaN(i)) {
+							if (name >= aNear.length)
+								console.error('FermatSpiral: Vector aNear get. Invalid index = ' + name);
+							return aNear[i];
 
-								if (name >= aNear.length)
-									console.error('FermatSpiral: Vector aNear get. Invalid index = ' + name);
-								return aNear[i];
+						}
+						//Найти индекс максимально удаленной вершины из массива aNear
+						function getMax() {
 
-							}
-							//Найти индекс максимально удаленной вершины из массива aNear
-							function getMax() {
+							var iMax;
+							for (var i = 0; i < aNear.length; i++) {
 
-								var iMax;
-								for (var i = 0; i < aNear.length; i++) {
-
-									if (iMax === undefined) iMax = i;
-									else if (aNear[iMax].distance < aNear[i].distance) iMax = i;
-
-								}
-								if (iMax != undefined) aNear.iMax = iMax;
-								else console.error('FermatSpiral: Vector aNear add getMax. Invalid iMax = ' + iMax);
+								if (iMax === undefined) iMax = i;
+								else if (aNear[iMax].distance < aNear[i].distance) iMax = i;
 
 							}
-							switch (name) {
+							if (iMax != undefined) aNear.iMax = iMax;
+							else console.error('FermatSpiral: Vector aNear add getMax. Invalid iMax = ' + iMax);
 
-								case 'length': return aNear.length;
-								case 'forEach': return aNear.forEach;
-								case 'iMax': return aNear.iMax;
-								case 'add': return function (i, distance) {
+						}
+						switch (name) {
 
-									//debug
-									for (var j = 0; j < aNear.length; j++) {
+							case 'length': return aNear.length;
+							case 'forEach': return aNear.forEach;
+							case 'iMax': return aNear.iMax;
+							case 'add': return function (i, distance) {
 
-										if (aNear[j].i === i) {
+								//debug
+								for (var j = 0; j < aNear.length; j++) {
 
-											console.error('FermatSpiral: Vector aNear add. Duplicate index = ' + i);
-											return;
+									if (aNear[j].i === i) {
 
-										}
+										console.error('FermatSpiral: Vector aNear add. Duplicate index = ' + i);
+										return;
 
 									}
 
-									const newItem = { i: i, distance: distance, };
-									if (aNear.length < maxLength) {
+								}
 
-										aNear.push(newItem);
+								const newItem = { i: i, distance: distance, };
+								if (aNear.length < maxLength) {
+
+									aNear.push(newItem);
+									getMax();
+
+								} else {
+
+									//Если максимально расстояние до ближайшей вершины больше растояние до текущей вершины, то заменить ближайшую вершину с максимальным расстоянием
+									//See phase i in D:\My documents\MyProjects\webgl\three.js\GitHub\commonNodeJS\master\fermatSpiral\WebGPU\create.c file
+									if (aNear[aNear.iMax].distance > distance) {
+
+										aNear[aNear.iMax] = newItem;
 										getMax();
 
-									} else {
-
-										//Если максимально расстояние до ближайшей вершины больше растояние до текущей вершины, то заменить ближайшую вершину с максимальным расстоянием
-										//See phase i in D:\My documents\MyProjects\webgl\three.js\GitHub\commonNodeJS\master\fermatSpiral\WebGPU\create.c file
-										if (aNear[aNear.iMax].distance > distance) {
-
-											aNear[aNear.iMax] = newItem;
-											getMax();
-
-										}
-
 									}
 
-
 								}
-								default: console.error('FermatSpiral: Update Vector get. name: ' + name);
+
 
 							}
-
-						},
-						set: function (target, name, value) {
-
-							target[name] = value;
-							return true;
-
-						},
-
-					});
-
-					//https://stackoverflow.com/questions/2449182/getter-setter-on-javascript-array
-					return new Proxy(array, {
-
-						get: function (array, name) {
-
-							var i = parseInt(name);
-							if (isNaN(i)) {
-
-								switch (name) {
-
-									//									case "array": return array;
-									/* *
-									* @description
-									* <pre>
-									* Projection of the <b>Vector</b> object into 3D space.
-									* Returns <b>THREE.Vector3</b> object.
-									* Projection of 1-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], 0, 0 ) </b>.
-									* Projection of 2-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], vector[1], 0 ) </b>.
-									* Projection of 3-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], vector[1], vector[2] ) </b>.
-									* </pre>
-									*/
-									/*
-																		case "point":
-																			const THREE = three.THREE;
-																			return new THREE.Vector3( this.get( undefined, 0 ), this.get( undefined, 1 ), this.get( undefined, 2 ) );
-									*/
-									/*
-									* Adds v to this vector.
-									*/
-									/*
-																		case "add":
-																			return function ( v ) {
-									
-																				array.forEach((value, i) => array[i] += v[i] );
-																				return this;
-									
-																			}
-																		case "index": return vectorSettings.index;
-																		case "isVector": return true;
-									*/
-									/*
-									* Computes the distance from this vector to v.
-									*/
-									case "distanceTo":
-										return function (v) {
-
-											var a = 0;
-											array.forEach((item, i) => { const b = item - v[i]; a = a + b * b; })
-											return Math.sqrt(a);
-
-										}
-									case "aNear": return array.aNear;
-									case "positionWorld": return array.positionWorld;
-									case "forEach": return array.forEach;
-									case "length": return array.length;
-									case "edges":
-
-										if (!array.edges)
-											array.edges = new Proxy([], {
-
-												get: function (edges, name, args) {
-
-													const i = parseInt(name);
-													if (!isNaN(i)) {
-
-														if (edges instanceof Array) {
-
-															if (i < edges.length && (edges[i] !== undefined))
-																return edges[i];
-															return 0;
-
-														}
-														return edges;
-
-													}
-													switch (name) {
-
-														case 'push': return edges.push;
-														case 'length': return edges.length;
-														case 'name': return edges.name;
-														case 'forEach': return edges.forEach;
-														case 'add': return function (id) { edges.push(id); }
-														default: console.error('FermatSpiral: Vector.edges get : ' + name);
-
-													}
-
-												},
-												set: function (edges, name, value) {
-
-													const i = parseInt(name);//индекс ребра
-													if (!isNaN(i)) {
-
-														//value - индекс ребра
-														if (edges.length >= maxLength) {
-
-															throw new MyError('FermatSpiral: update Vector get edges set. Edges length > ' + maxLength, MyError.IDS.edgesCountOverflow);
-
-														}
-														if (i >= edges.length) edges.push(value);
-														else edges[i] = value;
-														return edges.length;
-
-													}
-													switch (name) {
-
-														case 'length': edges.length = value; return true;
-														default: console.error('fermatSpiral: Vector edges set. Invalid name: ' + name);
-
-													}
-
-												}
-
-											});
-										return array.edges;
-									case 'indices': return array.indices;
-									case 'i': return array.i;
-									case 'arguments': return array.arguments;
-									default: { return _this[name]; }
-
-								}
-								return;
-
-							}
-							if (i >= n)
-								return 0;
-							if ((array.length > n) && settings.object.geometry.iAxes && (i < settings.object.geometry.iAxes.length))
-								i = settings.object.geometry.iAxes[i];
-							return array[i];
-
-						},
-						set: function (array, name, value) {
-
-							const i = parseInt(name);
-							if (!isNaN(i)) {
-
-								if (i >= array.length) {
-
-									array.push(value);
-									return array.length;
-
-								}
-								array[i] = value;
-								if (vectorSettings.onChange) vectorSettings.onChange();
-								return true;
-
-							}
-							switch (name) {
-
-								case 'onChange': vectorSettings.onChange = value; break;
-								case 'positionWorld': array.positionWorld = value; break;
-								case 'i': array.i = value; break;
-								default: console.error('fermatSpiral: Vector set. Invalid name: ' + name);
-
-							}
-							return true;
+							default: console.error('FermatSpiral: VectorWebGPU aNear get. name: ' + name);
 
 						}
 
-					});
+					},
+					set: function (target, name, value) {
 
-				}
-				push(value) { console.error('FermatSpiral Vector.push() unavailable'); }
-				pop() { console.error('FermatSpiral Vector.pop() unavailable'); }
+						target[name] = value;
+						return true;
+
+					},
+
+				});
+
+				//https://stackoverflow.com/questions/2449182/getter-setter-on-javascript-array
+				return new Proxy(array, {
+
+					get: function (array, name) {
+
+						var i = parseInt(name);
+						if (isNaN(i)) {
+
+							switch (name) {
+
+								//									case "array": return array;
+								/* *
+								* @description
+								* <pre>
+								* Projection of the <b>Vector</b> object into 3D space.
+								* Returns <b>THREE.Vector3</b> object.
+								* Projection of 1-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], 0, 0 ) </b>.
+								* Projection of 2-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], vector[1], 0 ) </b>.
+								* Projection of 3-dimensional vector into 3D space: <b>THREE.Vector3( vector[0], vector[1], vector[2] ) </b>.
+								* </pre>
+								*/
+								/*
+																	case "point":
+																		const THREE = three.THREE;
+																		return new THREE.Vector3( this.get( undefined, 0 ), this.get( undefined, 1 ), this.get( undefined, 2 ) );
+								*/
+								/*
+								* Adds v to this vector.
+								*/
+								/*
+																	case "add":
+																		return function ( v ) {
+								
+																			array.forEach((value, i) => array[i] += v[i] );
+																			return this;
+								
+																		}
+																	case "index": return vectorSettings.index;
+																	case "isVector": return true;
+								*/
+								/*
+								* Computes the distance from this vector to v.
+								*/
+								case "distanceTo":
+									return function (v) {
+
+										var a = 0;
+										array.forEach((item, i) => { const b = item - v[i]; a = a + b * b; })
+										return Math.sqrt(a);
+
+									}
+								case "aNear": return array.aNear;
+								case "positionWorld": return array.positionWorld;
+								case "forEach": return array.forEach;
+								case "length": return array.length;
+								case "edges":
+
+									if (!array.edges)
+										array.edges = new Proxy([], {
+
+											get: function (edges, name, args) {
+
+												const i = parseInt(name);
+												if (!isNaN(i)) {
+
+													if (edges instanceof Array) {
+
+														if (i < edges.length && (edges[i] !== undefined))
+															return edges[i];
+														return 0;
+
+													}
+													return edges;
+
+												}
+												switch (name) {
+
+													case 'push': return edges.push;
+													case 'length': return edges.length;
+													case 'name': return edges.name;
+													case 'forEach': return edges.forEach;
+													case 'add': return function (id) { edges.push(id); }
+													default: console.error('FermatSpiral: Vector.edges get : ' + name);
+
+												}
+
+											},
+											set: function (edges, name, value) {
+
+												const i = parseInt(name);//индекс ребра
+												if (!isNaN(i)) {
+
+													//value - индекс ребра
+													if (edges.length >= maxLength) {
+
+														throw new MyError('FermatSpiral: update Vector get edges set. Edges length > ' + maxLength, MyError.IDS.edgesCountOverflow);
+
+													}
+													if (i >= edges.length) edges.push(value);
+													else edges[i] = value;
+													return edges.length;
+
+												}
+												switch (name) {
+
+													case 'length': edges.length = value; return true;
+													default: console.error('fermatSpiral: Vector edges set. Invalid name: ' + name);
+
+												}
+
+											}
+
+										});
+									return array.edges;
+								case 'indices': return array.indices;
+								case 'i': return array.i;
+								case 'arguments': return array.arguments;
+								default: { return _this[name]; }
+
+							}
+							return;
+
+						}
+						if (i >= n)
+							return 0;
+						if ((array.length > n) && settings.object.geometry.iAxes && (i < settings.object.geometry.iAxes.length))
+							i = settings.object.geometry.iAxes[i];
+						return array[i];
+
+					},
+					set: function (array, name, value) {
+
+						const i = parseInt(name);
+						if (!isNaN(i)) {
+
+							if (i >= array.length) {
+
+								array.push(value);
+								return array.length;
+
+							}
+							array[i] = value;
+							if (vectorSettings.onChange) vectorSettings.onChange();
+							return true;
+
+						}
+						switch (name) {
+
+							case 'onChange': vectorSettings.onChange = value; break;
+							case 'positionWorld': array.positionWorld = value; break;
+							case 'i': array.i = value; break;
+							default: console.error('fermatSpiral: Vector set. Invalid name: ' + name);
+
+						}
+						return true;
+
+					}
+
+				});
 
 			}
+			push(value) { console.error('FermatSpiral Vector.push() unavailable'); }
+			pop() { console.error('FermatSpiral Vector.pop() unavailable'); }
+
+		}
+
+		class VectorWebGPU extends Vector {
+
+			/**
+			 * @description extends of Vector for WebGPU computing.
+			 * Params see in Vector description.
+			 */
+			constructor(array = 0, vectorSettings = {}) {
+
+				super(array, vectorSettings);
+
+				//индексы вершин, которые ближе всего расположены к текущей вершине
+				array.aNear = new Proxy([], {
+
+					get: function (aNear, name) {
+
+						const i = parseInt(name);
+						if (!isNaN(i)) {
+
+							if (name >= aNear.length)
+								console.error('FermatSpiral: VectorWebGPU aNear get. Invalid index = ' + name);
+							return aNear[i];
+
+						}
+						switch (name) {
+
+/*
+							case 'length': return aNear.length;
+							case 'forEach': return aNear.forEach;
+*/
+							default: console.error('FermatSpiral: VectorWebGPU aNear get. name: ' + name);
+
+						}
+
+					},
+					set: function (target, name, value) {
+
+//						target[name] = value;
+						console.error('FermatSpiral: VectorWebGPU aNear aet is not available. name: ' + name);
+						return true;
+
+					},
+
+				});
+
+			}
+
+		}
+
+		function update(callback) {
 
 			//График для последней точки спирали x ближайшая точка с максимальным индексом y
 			//https://www.kontrolnaya-rabota.ru/s/grafik/tochka/
@@ -560,11 +697,38 @@ class FermatSpiral {
 				const debugCount = 2,//Count of out debug values.
 					verticesRowlength = 2 +//vertice координаты вершины
 
+						//aNear индексы вершин, ближайших к текущей вершине
+						/*
+						struct VerticeANears {
+							length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
+							iMax : u32,//индекс максимально удаленной вершины из массива aNear
+							aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
+							debug : array<u32, debugCount>,
+						}
+						 */
+						(
+							1 + //length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
+							1 + //iMax : u32,//индекс максимально удаленной вершины из массива aNear
+
+							//aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
+						/*
+						struct ANear {
+							i: u32,//индекс вершины, ближайшей к текущей вершине
+							distance: f32,//distance between current vertice and nearest vertice.
+						}
+						 */
+							(
+								1 +//i: u32,//индекс вершины, ближайшей к текущей вершине
+								1 //distance: f32,//distance between current vertice and nearest vertice.
+							) * maxLength +
+							debugCount//debug
+						) +
+
 						//edges индексы ребер, которые имеют эту вершину. Максимально может быть 7 индексов
-						(1//размер элемента edges
-						 * maxLength//Количество элементов edges
-						+ 1//Непонятно почему нужно добавлять еще единичку. При этом в конце элемента vertices появляется ячейка равная нулю и к которой нет доступа
-							//может это WebGPU баг?
+						(
+							1//размер элемента edges
+							* maxLength//Количество элементов edges
+							+ 1//https://github.com/gpuweb/gpuweb/issues/3610#issuecomment-1321838200
 						) +
 					
 						debugCount,//debug
@@ -628,8 +792,8 @@ class FermatSpiral {
 								count: l * verticesRowlength,
 								out: out => {
 
-									console.log('vertices:');
-
+									console.log('vertices:' + verticesRowlength);
+/*
 									const verticesArray = new Float32Array(out);
 									const vertices = [];
 									for (var i = 0, j = 0; i < l; i++, j += verticesRowlength) {
@@ -651,6 +815,8 @@ class FermatSpiral {
 
 									});
 									console.log(aVertices);
+*/
+									points.out = { out: out, verticesRowlength: verticesRowlength };
 
 									const cookieName = 'WebGPUdebug',
 										boDebug = cookie.get(cookieName, false);
@@ -660,6 +826,7 @@ class FermatSpiral {
 										console.log('vertices test:');
 										const pointsDebug = [];
 										createVertices(pointsDebug);
+										createEdgesAndFaces(pointsDebug);
 										function compareArrays(a) {
 	
 											const name1 = Object.keys(a)[0], a1 = a[name1],
@@ -668,23 +835,27 @@ class FermatSpiral {
 											for (let i = 0; i < a1.length; i++){
 		
 												const i1 = a1[i], i2 = a2[i];
-												Object.keys(i1).forEach( key => {
-		
-													if (i1[key] instanceof Array) {
-														
-														const a = {};
-														a[name1 + '.' + key] = i1[key];
-														a[name2 + '.' + key] = i2[key];
-														compareArrays(a);
-														
-													} else {
-														
-														if (Math.abs(i1[key] - i2[key]) > 1.2e-5)//4e-6)//3.527606030825914e-7)
-															console.error('FermatSpiral: Debug. ' + name1 + '[' + i + '][' + key + ']: ' + i1[key] + ' !== ' + name2 + '[' + i + '][' + key + ']: ' + i2[key]);
-														
-													}
-									
-												} );
+												if (i2 !== undefined) {
+
+													Object.keys(i1).forEach(key => {
+
+														if (i1[key] instanceof Array) {
+
+															const a = {};
+															a[name1 + '.' + key] = i1[key];
+															a[name2 + '.' + key] = i2[key];
+															compareArrays(a);
+
+														} else {
+
+															if (Math.abs(i1[key] - i2[key]) > 1.2e-5)//4e-6)//3.527606030825914e-7)
+																console.error('FermatSpiral: Debug. ' + name1 + '[' + i + '][' + key + ']: ' + i1[key] + ' !== ' + name2 + '[' + i + '][' + key + ']: ' + i2[key]);
+
+														}
+
+													});
+
+												} else console.error('FermatSpiral: Debug. i2 is undefined.');
 												
 											}
 											
@@ -692,9 +863,7 @@ class FermatSpiral {
 										compareArrays({pointsDebug: pointsDebug, points: points});
 										console.log('vertices test completed');
 
-									}
-									
-									createEdgesAndFaces();
+									} else createEdgesAndFaces( points );
 
 								}
 							},
@@ -807,7 +976,7 @@ class FermatSpiral {
 			} else {
 
 				createVertices(points);
-				createEdgesAndFaces();
+				createEdgesAndFaces(points);
 
 			}
 
@@ -825,7 +994,7 @@ class FermatSpiral {
 
 			}
 
-			function createEdgesAndFaces() {
+			function createEdgesAndFaces(points) {
 
 				console.timeEnd('FermatSpiral: Vertices creation time = ');
 
