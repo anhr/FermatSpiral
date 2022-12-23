@@ -128,9 +128,13 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 
 				if (verticeANears[i].length < maxLength) {
 
-					verticeANears[i].aNear[verticeANears[i].length].i = j;//добавить индекс текущей ближайшей вершины
-					verticeANears[i].aNear[verticeANears[i].length].distance = vecDistance;
-					verticeANears[i].length++;
+verticeANears[i].aNear[verticeANears[i].length].i = j;//добавить индекс текущей ближайшей вершины
+					vertices[i].aNear.aNear[vertices[i].aNear.length].i = j;//добавить индекс текущей ближайшей вершины
+verticeANears[i].aNear[verticeANears[i].length].distance = vecDistance;
+					vertices[i].aNear.aNear[vertices[i].aNear.length].distance = vecDistance;
+verticeANears[i].length++;
+					vertices[i].aNear.length++;
+//					vertice1.aNear.length++;
 
 					//debug
 					verticeANears[i].debug[0] = 678;
@@ -154,8 +158,10 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 					//See array.aNear = new Proxy add aNear in FermatSpiral
 					if (verticeANears[i].aNear[verticeANears[i].iMax].distance > vecDistance) {
 
-						verticeANears[i].aNear[verticeANears[i].iMax].i = j;//изменить индекс текущей ближайшей вершины
-						verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
+verticeANears[i].aNear[verticeANears[i].iMax].i = j;//изменить индекс текущей ближайшей вершины
+						vertices[i].aNear.aNear[vertices[i].aNear.iMax].i = j;//изменить индекс текущей ближайшей вершины
+verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
+						vertices[i].aNear.aNear[vertices[i].aNear.iMax].distance = vecDistance;
 						getMax(i);
 
 					}
@@ -252,6 +258,7 @@ fn getMax(
 		*/
 
 	}
-	verticeANears[i].iMax = iMax;
+verticeANears[i].iMax = iMax;
+	vertices[i].aNear.iMax = iMax;;
 
 }

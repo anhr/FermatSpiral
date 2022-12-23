@@ -79,8 +79,8 @@ class FermatSpiral {
 	
 						if (name >= points.length)
 							console.error('FermatSpiral: points get. Invalid index = ' + name);
-						const j = i * this.out.verticesRowlength;
-						const vertice = new VectorWebGPU([this.out.verticesArray[j], this.out.verticesArray[j + 1]]);
+//						const j = i * this.out.lengthts.verticesRowlength;
+						const vertice = new VectorWebGPU(this.out, i);
 /*						
 						//индексы вершин, которые ближе всего расположены к текущей вершине
 						vertice.aNear = new Proxy([], {
@@ -121,7 +121,7 @@ class FermatSpiral {
 					}
 					switch (name) {
 	 
-						case 'length': return this.out.verticesArray.length / this.out.verticesRowlength;
+						case 'length': return this.out.verticesArray.length / this.out.lengthts.verticesRowlength;
 						case 'forEach': return (callback) => {
 
 							for (let i = 0; i < points.length; i++)callback(points[i], i);
@@ -147,6 +147,7 @@ class FermatSpiral {
 					case 'out':
 						this.out = value;
 						value.verticesArray = new Float32Array(value.out);
+						value.uint32Array = new Uint32Array(value.out);
 						return true;
 
 				}
@@ -616,31 +617,83 @@ class FermatSpiral {
 
 			/**
 			 * @description extends of Vector for WebGPU computing.
-			 * Params see in Vector description.
+			 * @param {object} out The following out keys are available
+			 * @param {ArrayBuffer} out.out array of output data. See [ArrayBuffer]{@link https://webidl.spec.whatwg.org/#idl-ArrayBuffer}.
+			 * @param {Float32Array} out.verticesArray is new Float32Array(out.out)
+			 * @param {Uint32Array} out.uint32Array is new Uint32Array(out.out)
+			 * @param {object} out.lengthts lengths of some WebGPU\create.c structures
+			 * @param {number} out.lengthts.aNearlength lengtht of ANear struct
+			 * @param {number} out.lengthts.aNearRowlength lengtht of VerticeANears struct
+			 * @param {number} out.lengthts.verticesRowlength vertices row length in bytes
+			 * @param {number} iVector index of vertice in the array of output data.
 			 */
-			constructor(array = 0, vectorSettings = {}) {
+			constructor(out, i) {
 
-				super(array, vectorSettings);
+				const iVector = i * out.lengthts.verticesRowlength;
+				const array = [out.verticesArray[iVector], out.verticesArray[iVector + 1]],
+					iANear = iVector + 2,//индекс объекта aNear
+					iANearANear = iANear + 2;//индекс массива aNear и одновременно индекс ключа i в елементе массива aNear
+				super(array);
 
-				//индексы вершин, которые ближе всего расположены к текущей вершине
-				array.aNear = new Proxy([], {
+				//объект индексов вершин, которые ближе всего расположены к текущей вершине
+				//see VerticeANears in WebGPU\create.c
+				/*
+				struct VerticeANears {
+				length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
+				iMax : u32,//индекс максимально удаленной вершины из массива aNear
+				aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
+				debug : array<u32, debugCount>,
+				}
+				*/
+				array.aNear = new Proxy({}, {
 
 					get: function (aNear, name) {
 
 						const i = parseInt(name);
 						if (!isNaN(i)) {
 
-							if (name >= aNear.length)
+							if (name >= array.aNear.length)
 								console.error('FermatSpiral: VectorWebGPU aNear get. Invalid index = ' + name);
-							return aNear[i];
+
+							//array.aNear.aNear
+							return new Proxy([], {
+
+								get: function (aNear, name) {
+
+/*
+									const i = parseInt(name);
+									if (!isNaN(i)) {
+
+										if (name >= array.aNear.length)
+											console.error('FermatSpiral: VectorWebGPU aNear get. Invalid index = ' + name);
+										return aNear[i];
+
+									}
+*/
+									switch (name) {
+
+//										case 'length': return out.uint32Array[iANear];
+										case 'i': return out.uint32Array[iANearANear + i * 2];
+										case 'distance': return out.verticesArray[iANearANear + i * 2 + 1];
+										default: console.error('FermatSpiral: VectorWebGPU aNear get. name: ' + name);
+
+									}
+
+								},
+								set: function (target, name, value) {
+
+									console.error('FermatSpiral: VectorWebGPU aNear.aNear aet is not available. name: ' + name);
+									return true;
+
+								},
+
+							});
 
 						}
 						switch (name) {
 
-/*
-							case 'length': return aNear.length;
-							case 'forEach': return aNear.forEach;
-*/
+							case 'length': return out.uint32Array[iANear];
+							case 'iMax': return out.uint32Array[iANear + 1];
 							default: console.error('FermatSpiral: VectorWebGPU aNear get. name: ' + name);
 
 						}
@@ -693,36 +746,43 @@ class FermatSpiral {
 			
 			if (WebGPU.isSupportWebGPU()) {
 
-				console.log('WebGPU: Create frematSpiral vertices');
 				const debugCount = 2,//Count of out debug values.
+
+					//длинна массива индексов вершин, ближайших к текущей вершине
+					/*
+					struct ANear {
+						i: u32,//индекс вершины, ближайшей к текущей вершине
+						distance: f32,//distance between current vertice and nearest vertice.
+					}
+					 */
+/*
+					aNearlength = (
+						1 +//i: u32,//индекс вершины, ближайшей к текущей вершине
+						1 //distance: f32,//distance between current vertice and nearest vertice.
+					) * maxLength,//максимальное количство индексов вершин, ближайших к текущей вершине
+*/
+
+					aNearDebugCount = debugCount,//2,
+
+					//aNear индексы вершин, ближайших к текущей вершине
+					/*
+					struct VerticeANears {
+						length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
+						iMax : u32,//индекс максимально удаленной вершины из массива aNear
+						aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
+						debug : array<u32, debugCount>,
+					}
+					 */
+/*
+					aNearRowlength = 1 + //количества обнаруженных индексов вершин, ближайших к текущей вершине
+						1 + //индекс максимально удаленной вершины из массива aNear
+						aNearlength +//длинна массива индексов вершин, ближайших к текущей вершине
+						aNearDebugCount,//место для отладки
+*/
+/*
 					verticesRowlength = 2 +//vertice координаты вершины
 
-						//aNear индексы вершин, ближайших к текущей вершине
-						/*
-						struct VerticeANears {
-							length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
-							iMax : u32,//индекс максимально удаленной вершины из массива aNear
-							aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
-							debug : array<u32, debugCount>,
-						}
-						 */
-						(
-							1 + //length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
-							1 + //iMax : u32,//индекс максимально удаленной вершины из массива aNear
-
-							//aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
-						/*
-						struct ANear {
-							i: u32,//индекс вершины, ближайшей к текущей вершине
-							distance: f32,//distance between current vertice and nearest vertice.
-						}
-						 */
-							(
-								1 +//i: u32,//индекс вершины, ближайшей к текущей вершине
-								1 //distance: f32,//distance between current vertice and nearest vertice.
-							) * maxLength +
-							debugCount//debug
-						) +
+						aNearRowlength +
 
 						//edges индексы ребер, которые имеют эту вершину. Максимально может быть 7 индексов
 						(
@@ -732,32 +792,69 @@ class FermatSpiral {
 						) +
 					
 						debugCount,//debug
-					aNearDebugCount = debugCount,//2,
-
-					//длинна массива индексов вершин, ближайших к текущей вершине
-					aNearlength = (
-						1 +//индекс ближайшей вершины
-						1//расстояние между вершинами
-					) * maxLength,//максимальное количство индексов вершин, ближайших к текущей вершине
-
-					//длинна структуры VerticeANears в файле create.c равная длинне ряда в масиве aNear
-					aNearRowlength = 1 + //тут хранится количство индексов вершин, ближайших к текущей вершине
-						1 + //индекс максимально удаленной вершины из массива aNear
-						aNearlength +//длинна массива индексов вершин, ближайших к текущей вершине
-						aNearDebugCount,//место для отладки
+*/
 
 					//Use https://planetcalc.com/5992/ for approximation.
 					//x 22 1120 2169
 					//y 19 2904 5853
 					//edgesCount = 0.00011085*points.length*points.length + 2.4848132*points.length - 50.75835068;
 					edgesCount = points.length >= 22 ? 0.00008558 * points.length * points.length + 2.52977007 * points.length - 36 : 19,
+
 					//длинна структуры EdgesItem в файле create.c равная длинне ряда в масиве edges
+					/*
+					struct EdgesItem {
+					i: u32,//индекс ребра
+					verticesIndices : array<u32, 2>,//индексы вершин ребра
+					debug : array<u32, debugCount>,
+					};
+					 */
 					edgesRowlength =
 						1 +//индекс ребра
 						2 +//индексы вершин ребра
 						debugCount;//debug
+				const lengthts = {
+					
+					//длинна массива индексов вершин, ближайших к текущей вершине
+					/*
+					struct ANear {
+						i: u32,//индекс вершины, ближайшей к текущей вершине
+						distance: f32,//distance between current vertice and nearest vertice.
+					}
+					 */
+					aNearlength: (
+						1 +//i: u32,//индекс вершины, ближайшей к текущей вершине
+						1 //distance: f32,//distance between current vertice and nearest vertice.
+					) * maxLength,//максимальное количство индексов вершин, ближайших к текущей вершине
 
-				console.log('Vertices: ' + points.length +
+				}
+
+				//aNear индексы вершин, ближайших к текущей вершине
+				/*
+				struct VerticeANears {
+					length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
+					iMax : u32,//индекс максимально удаленной вершины из массива aNear
+					aNear : array<ANear, maxLength>,//индексы вершин, которые ближе всего расположены к текущей вершине
+					debug : array<u32, debugCount>,
+				}
+				 */
+				lengthts.aNearRowlength =
+					1 + //количества обнаруженных индексов вершин, ближайших к текущей вершине
+					1 + //индекс максимально удаленной вершины из массива aNear
+					lengthts.aNearlength +//длинна массива индексов вершин, ближайших к текущей вершине
+					aNearDebugCount;//место для отладки
+
+				//длинна вершины 
+				lengthts.verticesRowlength = 2 +//vertice координаты вершины
+					lengthts.aNearRowlength +
+					//edges индексы ребер, которые имеют эту вершину. Максимально может быть 7 индексов
+					(
+						1//размер элемента edges
+						* maxLength//Количество элементов edges
+						+ 1//https://github.com/gpuweb/gpuweb/issues/3610#issuecomment-1321838200
+					) +
+					debugCount;//debug
+				
+				console.log('WebGPU: Create frematSpiral vertices. Vertices: ' + points.length +
 					//' edges: ' + edges.length +
 					' edgesCount: ' + edgesCount);
 				new WebGPU(
@@ -789,14 +886,15 @@ class FermatSpiral {
 
 							//vertices
 							{
-								count: l * verticesRowlength,
+								count: l * lengthts.verticesRowlength,
+								phase: 1,
 								out: out => {
 
-									console.log('vertices:' + verticesRowlength);
+									console.log('vertices:' + lengthts.verticesRowlength);
 /*
 									const verticesArray = new Float32Array(out);
 									const vertices = [];
-									for (var i = 0, j = 0; i < l; i++, j += verticesRowlength) {
+									for (var i = 0, j = 0; i < l; i++, j += lengthts.verticesRowlength) {
 										vertices.push({
 											vertice: new Vector([verticesArray[j], verticesArray[j + 1]]),
 											debug: [verticesArray[j + 2 + 0], verticesArray[j + 2 + 1]],
@@ -808,7 +906,7 @@ class FermatSpiral {
 
 										size: [
 											l,//fermatSpiral vertices count. Каждый ряд это координата точки 
-											verticesRowlength,
+											lengthts.verticesRowlength,
 										],
 										push: item => { points.push(new Vector([item[0], item[1]])); },
 										returnMatrix: true,//return matrix for debug
@@ -816,7 +914,7 @@ class FermatSpiral {
 									});
 									console.log(aVertices);
 */
-									points.out = { out: out, verticesRowlength: verticesRowlength };
+									points.out = { out: out, lengthts: lengthts };// verticesRowlength: verticesRowlength };
 
 									const cookieName = 'WebGPUdebug',
 										boDebug = cookie.get(cookieName, false);
@@ -832,8 +930,9 @@ class FermatSpiral {
 											const name1 = Object.keys(a)[0], a1 = a[name1],
 												name2 = Object.keys(a)[1], a2 = a[name2];
 											if (a1.length !== a2.length) console.error('FermatSpiral: Debug. ' + name1 + '.length: ' + a1.length + ' !== ' + name2 + '.length: ' + a2.length);
-											for (let i = 0; i < a1.length; i++){
-		
+//											for (let i = 0; i < a1.length; i++
+											Object.keys(a1).forEach(i => {
+
 												const i1 = a1[i], i2 = a2[i];
 												if (i2 !== undefined) {
 
@@ -842,44 +941,45 @@ class FermatSpiral {
 														if (i1[key] instanceof Array) {
 
 															const a = {};
-															a[name1 + '.' + key] = i1[key];
-															a[name2 + '.' + key] = i2[key];
+															a[name1 + '[' + i + '].' + key] = i1[key];
+															a[name2 + '[' + i + '].' + key] = i2[key];
 															compareArrays(a);
 
 														} else {
 
 															if (Math.abs(i1[key] - i2[key]) > 1.2e-5)//4e-6)//3.527606030825914e-7)
-																console.error('FermatSpiral: Debug. ' + name1 + '[' + i + '][' + key + ']: ' + i1[key] + ' !== ' + name2 + '[' + i + '][' + key + ']: ' + i2[key]);
+																console.error('FermatSpiral: Debug. ' + name1 + '[' + i + ']["' + key + '"]: ' + i1[key] + ' !== ' + name2 + '[' + i + ']["' + key + '"]: ' + i2[key]);
 
 														}
 
 													});
 
 												} else console.error('FermatSpiral: Debug. i2 is undefined.');
-												
-											}
+
+											});
 											
 										}
+//const f = points[1].aNear[4]["i"];
 										compareArrays({pointsDebug: pointsDebug, points: points});
 										console.log('vertices test completed');
 
-									} else createEdgesAndFaces( points );
+									}// else createEdgesAndFaces( points );
 
 								}
 							},
 							//aNear
 							{
 
-								count: l * aNearRowlength,
+								count: l * lengthts.aNearRowlength,
 								phase: 1,
 								out: out => {
 
 									const verticesANears = [], uInt32Array = new Uint32Array(out), float32Array = new Float32Array(out);
-									for (var i = 0, j = 0; i < l; i++, j += aNearRowlength) {
+									for (var i = 0, j = 0; i < l; i++, j += lengthts.aNearRowlength) {
 
 										const aNear = [];
 										//	, step = aNearlength / maxLength;
-										for (var k = 0; k < aNearlength; k++) {
+										for (var k = 0; k < lengthts.aNearlength; k++) {
 
 											aNear.push({ i: uInt32Array[j + 2 + k], distance: float32Array[j + 2 + k + 1] })
 											k++;
@@ -888,7 +988,7 @@ class FermatSpiral {
 											length: uInt32Array[j],//количества обнаруженных индексов вершин, ближайших к текущей вершине
 											iMax: uInt32Array[j + 1],//индекс максимально удаленной вершины из массива aNear
 											aNear: aNear,//индексы вершин, которые ближе всего расположены к текущей вершине
-											debug: [uInt32Array[j + aNearlength + 2 + 0], uInt32Array[j + aNearlength + 2 + 1]],
+											debug: [uInt32Array[j + lengthts.aNearlength + 2 + 0], uInt32Array[j + lengthts.aNearlength + 2 + 1]],
 										});
 
 									}
@@ -907,7 +1007,7 @@ class FermatSpiral {
 
 										size: [
 											l,//fermatSpiral vertices count. индекс ряда это индекс вершины 
-											aNearRowlength,//длинна структуры VerticeANears равная длинне ряда в масиве aNear
+											lengthts.aNearRowlength,//длинна структуры VerticeANears равная длинне ряда в масиве aNear
 										],
 										type: Uint32Array,//aNearType,
 
@@ -963,7 +1063,7 @@ class FermatSpiral {
 
 							return text.
 								replace('%debugCount', debugCount).
-								replace('%aNearRowLength', aNearRowlength).
+								replace('%aNearRowLength', lengthts.aNearRowlength).
 								replace('%c,', settings.c + ',').
 								replace('%count', settings.count);
 
