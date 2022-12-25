@@ -970,50 +970,6 @@ class FermatSpiral {
 
 								}
 							},
-/*
-							//aNear
-							{
-
-								count: l * lengthts.aNearRowlength,
-								phase: 1,
-								out: out => {
-
-									const verticesANears = [], uInt32Array = new Uint32Array(out), float32Array = new Float32Array(out);
-									for (var i = 0, j = 0; i < l; i++, j += lengthts.aNearRowlength) {
-
-										const aNear = [];
-										//	, step = aNearlength / maxLength;
-										for (var k = 0; k < lengthts.aNearlength; k++) {
-
-											aNear.push({ i: uInt32Array[j + 2 + k], distance: float32Array[j + 2 + k + 1] })
-											k++;
-										}
-										verticesANears.push({
-											length: uInt32Array[j],//количества обнаруженных индексов вершин, ближайших к текущей вершине
-											iMax: uInt32Array[j + 1],//индекс максимально удаленной вершины из массива aNear
-											aNear: aNear,//индексы вершин, которые ближе всего расположены к текущей вершине
-											debug: [uInt32Array[j + lengthts.aNearlength + 2 + 0], uInt32Array[j + lengthts.aNearlength + 2 + 1]],
-										});
-
-									}
-
-									const aNear = WebGPU.out2Matrix(out, {
-
-										size: [
-											l,//fermatSpiral vertices count. индекс ряда это индекс вершины 
-											lengthts.aNearRowlength,//длинна структуры VerticeANears равная длинне ряда в масиве aNear
-										],
-										type: Uint32Array,//aNearType,
-
-									});
-									console.log('aNear:');
-									//console.table(aNear);
-									console.log(aNear);
-
-								}
-
-							},
-*/
 							//edges
 							{
 

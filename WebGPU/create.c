@@ -28,18 +28,6 @@ c: f32,//constant scaling factor. See Fermat's spiral https://en.wikipedia.org/w
 count : u32,//points count меньше общего количества точек для того что бы точки, расположенные на краю спирали имели ребра направленные к этим лишним точкам.
 };
 const settings = Settings(%c, %count);
-/*
-//params
-//Не получается в одну стркутуру засунуть данные разного типа
-struct ParamsF32 {
-c: f32,//constant scaling factor. See Fermat's spiral https://en.wikipedia.org/wiki/Fermat%27s_spiral for details.
-}
-@group(0) @binding(0) var<uniform> paramsF32 : ParamsF32;
-struct ParamsU32 {
-count: u32,//points count меньше общего количества точек для того что бы точки, расположенные на краю спирали имели ребра направленные к этим лишним точкам.
-}
-@group(0) @binding(1) var<uniform> paramsU32 : ParamsU32;
-*/
 
 struct ANear {
 i: u32,//индекс вершины, ближайшей к текущей вершине
@@ -62,8 +50,6 @@ edges: array<u32, maxLength>,//индексы ребер, которые име�
 debug : array<f32, debugCount>
 };
 @group(0) @binding(0) var<storage, read_write> vertices : array <Vertices>;
-
-//@group(0) @binding(1) var<storage, read_write> verticeANears : array<VerticeANears>;//<u32>;//индексы ближайших к текущей вершине вершин
 
 //edges
 //длинна этой структуры определена в edgesRowlength в файле fermatSpiral.js
@@ -91,7 +77,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 		//Vertices
 		case 0: {
 			let angleInRadians = f32(i) * a - b;
-//			let radius = paramsF32.c * sqrt(f32(i));
 			let radius = settings.c * sqrt(f32(i));
 			vertices[i].vertice = vec2(radius * cos(angleInRadians), radius * sin(angleInRadians));
 
@@ -107,7 +92,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 		case 1: {
 			var index = i * aNearRowLength;
 			let vertice1 = vertices[i].vertice;//координаты вершины для которой будем искать ближайшие вершины
-//			let pointer1 = ptr<private, array<f32, 50>>;
 
 			//debug
 			/*
@@ -125,23 +109,15 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 				let vertice2 = vertices[j].vertice;//Координаты текущей ближайшей вершины
 				let vecDistance = distance(vertice1, vertice2);//расстояние между вершиной и текущей ближайшей вершиной
 
-//if (verticeANears[i].length < maxLength)
 				if (vertices[i].aNear.length < maxLength)
 				{
 
 					//если массив бижайших вершии еще не заполнен
 					//See "case 'add'" in "array.aNear = new Proxy" in "class Vector" in fermatSpiral.js
 
-//verticeANears[i].aNear[verticeANears[i].length].i = j;//добавить индекс текущей ближайшей вершины
 					vertices[i].aNear.aNear[vertices[i].aNear.length].i = j;//добавить индекс текущей ближайшей вершины
-
-//!!!!!!!!!!!!!!!!!!!!!
-//verticeANears[i].aNear[verticeANears[i].length].distance = vecDistance;
-
 					vertices[i].aNear.aNear[vertices[i].aNear.length].distance = vecDistance;
-//verticeANears[i].length++;
 					vertices[i].aNear.length++;
-//					vertice1.aNear.length++;
 
 					getMax(i);
 
@@ -159,12 +135,9 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 
 					//Если максимально расстояние до ближайшей вершины больше растояние до текущей вершины, то заменить ближайшую вершину с максимальным расстоянием
 					//See array.aNear = new Proxy add aNear in FermatSpiral
-//if (verticeANears[i].aNear[verticeANears[i].iMax].distance > vecDistance)
 					if (vertices[i].aNear.aNear[vertices[i].aNear.iMax].distance > vecDistance) {
 
-//verticeANears[i].aNear[verticeANears[i].iMax].i = j;//изменить индекс текущей ближайшей вершины
 						vertices[i].aNear.aNear[vertices[i].aNear.iMax].i = j;//изменить индекс текущей ближайшей вершины
-//verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
 						vertices[i].aNear.aNear[vertices[i].aNear.iMax].distance = vecDistance;
 						getMax(i);
 
