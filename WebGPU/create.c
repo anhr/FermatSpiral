@@ -63,8 +63,7 @@ debug : array<f32, debugCount>
 };
 @group(0) @binding(0) var<storage, read_write> vertices : array <Vertices>;
 
-@group(0) @binding(1) var<storage, read_write> verticeANears : array<VerticeANears>;//<u32>;//индексы ближайших к текущей вершине вершин
-//@group(0) @binding(2) var<storage, read_write> aNearDistance : array<f32>;//distance between current vertice and nearest vertices.
+//@group(0) @binding(1) var<storage, read_write> verticeANears : array<VerticeANears>;//<u32>;//индексы ближайших к текущей вершине вершин
 
 //edges
 //длинна этой структуры определена в edgesRowlength в файле fermatSpiral.js
@@ -77,9 +76,9 @@ struct Edges {
 length: u32,
 indices : array<EdgesItem>,
 }
-@group(0) @binding(2) var<storage, read_write> edges : Edges;
+@group(0) @binding(1) var<storage, read_write> edges : Edges;
 
-@group(0) @binding(3) var<uniform> phase : u32;
+@group(0) @binding(2) var<uniform> phase : u32;
 
 @compute @workgroup_size(1)//, 1)
 fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
@@ -126,19 +125,23 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 				let vertice2 = vertices[j].vertice;//Координаты текущей ближайшей вершины
 				let vecDistance = distance(vertice1, vertice2);//расстояние между вершиной и текущей ближайшей вершиной
 
-				if (verticeANears[i].length < maxLength) {
+//if (verticeANears[i].length < maxLength)
+				if (vertices[i].aNear.length < maxLength)
+				{
 
-verticeANears[i].aNear[verticeANears[i].length].i = j;//добавить индекс текущей ближайшей вершины
+					//если массив бижайших вершии еще не заполнен
+					//See "case 'add'" in "array.aNear = new Proxy" in "class Vector" in fermatSpiral.js
+
+//verticeANears[i].aNear[verticeANears[i].length].i = j;//добавить индекс текущей ближайшей вершины
 					vertices[i].aNear.aNear[vertices[i].aNear.length].i = j;//добавить индекс текущей ближайшей вершины
-verticeANears[i].aNear[verticeANears[i].length].distance = vecDistance;
+
+//!!!!!!!!!!!!!!!!!!!!!
+//verticeANears[i].aNear[verticeANears[i].length].distance = vecDistance;
+
 					vertices[i].aNear.aNear[vertices[i].aNear.length].distance = vecDistance;
-verticeANears[i].length++;
+//verticeANears[i].length++;
 					vertices[i].aNear.length++;
 //					vertice1.aNear.length++;
-
-					//debug
-					verticeANears[i].debug[0] = 678;
-					verticeANears[i].debug[1] = 901;
 
 					getMax(i);
 
@@ -156,11 +159,12 @@ verticeANears[i].length++;
 
 					//Если максимально расстояние до ближайшей вершины больше растояние до текущей вершины, то заменить ближайшую вершину с максимальным расстоянием
 					//See array.aNear = new Proxy add aNear in FermatSpiral
-					if (verticeANears[i].aNear[verticeANears[i].iMax].distance > vecDistance) {
+//if (verticeANears[i].aNear[verticeANears[i].iMax].distance > vecDistance)
+					if (vertices[i].aNear.aNear[vertices[i].aNear.iMax].distance > vecDistance) {
 
-verticeANears[i].aNear[verticeANears[i].iMax].i = j;//изменить индекс текущей ближайшей вершины
+//verticeANears[i].aNear[verticeANears[i].iMax].i = j;//изменить индекс текущей ближайшей вершины
 						vertices[i].aNear.aNear[vertices[i].aNear.iMax].i = j;//изменить индекс текущей ближайшей вершины
-verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
+//verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
 						vertices[i].aNear.aNear[vertices[i].aNear.iMax].distance = vecDistance;
 						getMax(i);
 
@@ -169,48 +173,13 @@ verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
 				}
 
 			}
+/*
 			for (var k = 0u; k < verticeANears[i].length; k++) {
 				let i1 = verticeANears[i].aNear[k].i;
 				var boDuplicate = false;
-//edges.length = 123;
-//edges.indices[5] = 456;
-				/*
-				//debug
-				if (k == 1) {
-//					aNear[i].debug[0] = i1;// aNear[iMaxIndex];
-					edges.indices[edges.length].debug[0] = 123;
-				}
-				*/
 
 				for (var j = 0u; j < edges.length; j++){
 
-					/*
-					struct EdgesItem {
-					i: u32,//индекс ребра
-						verticesIndices : array<u32, 2>,//индексы вершин ребра
-						debug : array<u32, debugCount>,
-					};
-					struct Edges {
-					length: u32,
-						indices : array<EdgesItem>,
-					}
-					edges[j] is edges.indices[j] ребро с индексом j
-					edges[j][0] is edges.indices[j].verticesIndices[0] индекс нулевой вершины ребра
-					if (
-						((edges[j][0] === i) && (edges[j][1] === i1)) ||
-						((edges[j][0] === i1) && (edges[j][1] === i))
-						) {
-
-						boDuplicate = true;
-						break;
-
-					}
-					*/
-					/*
-					//debug
-					edges.indices[edges.length].debug[0] = i1;
-					edges.indices[edges.length].debug[1] = settings.count;// paramsU32.count;
-					*/
 
 				}
 				if (boDuplicate || (i >= settings.count) || (i1 >= settings.count)) { continue; }
@@ -223,6 +192,7 @@ verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
 
 				edges.length++;
 			}
+*/
 			break;
 		}
 
@@ -239,26 +209,16 @@ verticeANears[i].aNear[verticeANears[i].iMax].distance = vecDistance;
 
 //Найти индекс максимально удаленной вершины из массива aNear
 fn getMax(
-	i : u32//fermatSpiral vertice index
+	i : u32//for debug. fermatSpiral vertice index
 ) {
 
-	var aNearItem = verticeANears[i];
+	var aNearItem = vertices[i].aNear;
 	var iMax = aNearItem.iMax;
-	for (var aNearIndex = 0u; aNearIndex < verticeANears[i].length; aNearIndex++) {
+	for (var aNearIndex = 0u; aNearIndex < aNearItem.length; aNearIndex++) {
 
 		if (aNearItem.aNear[iMax].distance < aNearItem.aNear[aNearIndex].distance) { iMax = aNearIndex; }
-		/*
-		//debug
-		if (i == 1) {
-			//vertices[i * verticesRowSize + 2 + 0] = aNearDistance[aNearDistanceIndex + iMax];
-			//vertices[i * verticesRowSize + 2 + 1] = aNearDistance[aNearDistanceIndex + i];
-			aNear[i].debug[0] = aNear[i].aNear[aNearIndex].i;
-			aNear[i].debug[1] = aNear[i].iMax;
-		}
-		*/
 
 	}
-verticeANears[i].iMax = iMax;
-	vertices[i].aNear.iMax = iMax;;
+	vertices[i].aNear.iMax = iMax;
 
 }

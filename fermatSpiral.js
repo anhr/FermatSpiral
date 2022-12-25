@@ -415,6 +415,9 @@ class FermatSpiral {
 								const newItem = { i: i, distance: distance, };
 								if (aNear.length < maxLength) {
 
+									//если массив бижайших вершии еще не заполнен
+									//see case 1 in WebGPU\create.c
+									
 									aNear.push(newItem);
 									getMax();
 
@@ -967,6 +970,7 @@ class FermatSpiral {
 
 								}
 							},
+/*
 							//aNear
 							{
 
@@ -993,16 +997,6 @@ class FermatSpiral {
 
 									}
 
-									/*
-									//debug
-									console.log('verticesANears = ');
-									verticesANears.forEach(item => {
-										let log = '';
-										item.aNear.forEach(aNear => log += ' i:' + aNear.i + ' d:' + aNear.distance);
-										console.log('iMax:' + item.iMax + log);
-									});
-									*/
-
 									const aNear = WebGPU.out2Matrix(out, {
 
 										size: [
@@ -1019,6 +1013,7 @@ class FermatSpiral {
 								}
 
 							},
+*/
 							//edges
 							{
 
