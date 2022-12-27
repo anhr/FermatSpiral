@@ -31,6 +31,7 @@ import WebGPU from '../../WebGPU/master/WebGPU.js';
 //import WebGPU from 'https://raw.githack.com/anhr/WebGPU/master/build/WebGPU.module.min.js';
 
 import cookie from '../../commonNodeJS/master/cookieNodeJS/cookie.js';
+import compareArrays from '../../commonNodeJS/master/compareArrays.js'
 
 class FermatSpiral {
 
@@ -928,42 +929,14 @@ class FermatSpiral {
 										const pointsDebug = [];
 										createVertices(pointsDebug);
 										createEdgesAndFaces(pointsDebug);
-										function compareArrays(a) {
-	
-											const name1 = Object.keys(a)[0], a1 = a[name1],
-												name2 = Object.keys(a)[1], a2 = a[name2];
-											if (a1.length !== a2.length) console.error('FermatSpiral: Debug. ' + name1 + '.length: ' + a1.length + ' !== ' + name2 + '.length: ' + a2.length);
-//											for (let i = 0; i < a1.length; i++
-											Object.keys(a1).forEach(i => {
-
-												const i1 = a1[i], i2 = a2[i];
-												if (i2 !== undefined) {
-
-													Object.keys(i1).forEach(key => {
-
-														if (i1[key] instanceof Array) {
-
-															const a = {};
-															a[name1 + '[' + i + '].' + key] = i1[key];
-															a[name2 + '[' + i + '].' + key] = i2[key];
-															compareArrays(a);
-
-														} else {
-
-															if (Math.abs(i1[key] - i2[key]) > 1.2e-5)//4e-6)//3.527606030825914e-7)
-																console.error('FermatSpiral: Debug. ' + name1 + '[' + i + ']["' + key + '"]: ' + i1[key] + ' !== ' + name2 + '[' + i + ']["' + key + '"]: ' + i2[key]);
-
-														}
-
-													});
-
-												} else console.error('FermatSpiral: Debug. i2 is undefined.');
-
-											});
-											
-										}
 //const f = points[1].aNear[4]["i"];
-										compareArrays({pointsDebug: pointsDebug, points: points});
+										compareArrays({ pointsDebug: pointsDebug, points: points });
+//compareArrays(pointsDebug, points);
+const a1 = [1, 2, 3, 'cat'  , [1.1, 1.1000000001], { name: 'Tom'  , age: 20 }];
+const a2 = [1, 2, 4, 'mouse', [1.2, 1.1000000002], { name: 'Jerry', age: 20 }];										
+a1.i = 5;
+//compareArrays(a1, a2);
+compareArrays({a1: a1, a2: a2});
 										console.log('vertices test completed');
 
 									}// else createEdgesAndFaces( points );
