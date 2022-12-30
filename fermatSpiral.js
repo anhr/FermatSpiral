@@ -931,12 +931,17 @@ class FermatSpiral {
 										createEdgesAndFaces(pointsDebug);
 //const f = points[1].aNear[4]["i"];
 										compareArrays({ pointsDebug: pointsDebug, points: points });
-//compareArrays(pointsDebug, points);
-const a1 = [1, 2, 3, 'cat'  , [1.1, 1.1000000001], { name: 'Tom'  , age: 20 }];
-const a2 = [1, 2, 4, 'mouse', [1.2, 1.1000000002], { name: 'Jerry', age: 20 }];										
-a1.i = 5;
-//compareArrays(a1, a2);
-compareArrays({a1: a1, a2: a2});
+//										compareArrays(pointsDebug, points);
+										
+										/*										
+										//compareArrays test
+										const a1 = [1, 2, 3, 'cat'  , [1.1, 1.1000000001], { name: 'Tom'  , age: 20 }];
+										const a2 = [1, 2, 4, 'mouse', [1.2, 1.1000000002], { name: 'Jerry', age: 20 }];										
+										a1.i = 5;
+										//compareArrays(a1, a2);
+										compareArrays({a1: a1, a2: a2});
+										*/
+										
 										console.log('vertices test completed');
 
 									}// else createEdgesAndFaces( points );
