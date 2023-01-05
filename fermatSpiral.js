@@ -1191,6 +1191,8 @@ class FermatSpiral {
 					console.log(log);
 					*/
 					
+					//add edges
+					//find '//add edges' comment in WebGPU\create.c
 					for (var k = 0; k < vertice1.aNear.length; k++) {
 
 						const i1 = vertice1.aNear[k].i;

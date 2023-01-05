@@ -34,6 +34,7 @@ i: u32,//индекс вершины, ближайшей к текущей ве�
 distance : f32,//distance between current vertice and nearest vertice.
 }
 
+//индексы вершин, которые ближе всего расположены к текущей вершине
 //длинна этой структуры определена в aNearRowlength в файле fermatSpiral.js
 struct VerticeANears {
 length: u32,//количества обнаруженных индексов вершин, ближайших к текущей вершине
@@ -146,9 +147,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 				}
 
 			}
-/*
-			for (var k = 0u; k < verticeANears[i].length; k++) {
-				let i1 = verticeANears[i].aNear[k].i;
+
+			//add edges
+			//find '//add edges' comment in fermatSpiral.js
+			let vertice1_aNear = vertices[i].aNear;//VerticeANears - индексы вершин, которые ближе всего расположены к текущей вершине
+			for (var k = 0u; k < vertice1_aNear.length; k++) {
+				let i1 = vertice1_aNear.aNear[k].i;
 				var boDuplicate = false;
 
 				for (var j = 0u; j < edges.length; j++){
@@ -165,7 +169,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
 
 				edges.length++;
 			}
-*/
+
 			break;
 		}
 
