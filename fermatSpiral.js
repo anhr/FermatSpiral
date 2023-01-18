@@ -1000,7 +1000,7 @@ class FermatSpiral {
 
 					},
 				);
-				new WebGPU.gui(settings.object.options, settings.object.dat);
+				//new WebGPU.gui(settings.object.options, settings.object.dat);//under constraction
 
 			} else {
 
