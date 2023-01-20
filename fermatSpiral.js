@@ -629,7 +629,7 @@ class FermatSpiral {
 			 * @param {number} out.lengthts.aNearlength lengtht of ANear struct
 			 * @param {number} out.lengthts.aNearRowlength lengtht of VerticeANears struct
 			 * @param {number} out.lengthts.verticesRowlength vertices row length in bytes
-			 * @param {number} iVector index of vertice in the array of output data.
+			 * @param {number} i index of vertice in the array of output data.
 			 */
 			constructor(out, i) {
 
