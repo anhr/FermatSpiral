@@ -1395,7 +1395,7 @@ class FermatSpiral {
 			if (!settings.object) return;
 			new ND(n, {
 
-				plane: false,
+				//plane: false,
 				object: {
 
 					name: 'Fermat Spiral',
